@@ -19,6 +19,10 @@ class PdfService {
   static const _textDark = PdfColor.fromInt(0xFF2C2526);
   static const _textMuted = PdfColor.fromInt(0xFF7A6F71);
   static const _bgLight = PdfColor.fromInt(0xFFFBF9F9);
+  static const _borderLight = PdfColor.fromInt(0xFFEFE8E8);
+  static const _roseLight = PdfColor.fromInt(0xFFF9EEF0);
+  static const _goldLight = PdfColor.fromInt(0xFFFAF4E1);
+  static const _infoBlue = PdfColor.fromInt(0xFF4A90E2);
   static const _successGreen = PdfColor.fromInt(0xFF48A868);
   static const _errorRed = PdfColor.fromInt(0xFFD9534F);
   static const _warningOrange = PdfColor.fromInt(0xFFE58F3B);
@@ -55,7 +59,9 @@ class PdfService {
     }
 
     final totalPax = guests.fold(0, (sum, g) => sum + g.pax);
-    final attending = guests.where((g) => g.rsvpStatus == RsvpStatus.attending).fold(0, (s, g) => s + g.pax);
+    final attending = guests
+        .where((g) => g.rsvpStatus == RsvpStatus.attending)
+        .fold(0, (s, g) => s + g.pax);
     final sent = guests.where((g) => g.isInvitationSent).length;
 
     doc.addPage(
@@ -97,7 +103,7 @@ class PdfService {
                     borderRadius: pw.BorderRadius.circular(6),
                   ),
                   child: pw.Text(
-                    '${entry.key}  (${entry.value.length} nama)',
+                    '${entry.key} (${entry.value.length} nama)',
                     style: pw.TextStyle(
                       color: PdfColors.white,
                       fontWeight: pw.FontWeight.bold,
@@ -107,18 +113,18 @@ class PdfService {
                 ),
                 pw.SizedBox(height: 6),
                 pw.Table(
-                  border: pw.TableBorder.all(color: PdfColor.fromInt(0xFFEFE8E8), width: 0.5),
-                  columnWidths: {
-                    0: const pw.FixedColumnWidth(28),
-                    1: const pw.FlexColumnWidth(3),
-                    2: const pw.FlexColumnWidth(1.5),
-                    3: const pw.FlexColumnWidth(1.5),
-                    4: const pw.FlexColumnWidth(1.5),
-                    5: const pw.FlexColumnWidth(2),
+                  border: pw.TableBorder.all(color: _borderLight, width: 0.5),
+                  columnWidths: const {
+                    0: pw.FixedColumnWidth(28),
+                    1: pw.FlexColumnWidth(3),
+                    2: pw.FlexColumnWidth(1.2),
+                    3: pw.FlexColumnWidth(1.5),
+                    4: pw.FlexColumnWidth(1.8),
+                    5: pw.FlexColumnWidth(2),
                   },
                   children: [
                     pw.TableRow(
-                      decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF9EEF0)),
+                      decoration: const pw.BoxDecoration(color: _roseLight),
                       children: [
                         _tableHeader('No'),
                         _tableHeader('Nama'),
@@ -133,16 +139,19 @@ class PdfService {
                       final g = e.value;
                       return pw.TableRow(
                         decoration: pw.BoxDecoration(
-                          color: i.isEven ? PdfColors.white : PdfColor.fromInt(0xFFFBF9F9),
+                          color: i.isEven ? PdfColors.white : _bgLight,
                         ),
                         children: [
                           _tableCell('${i + 1}', align: pw.TextAlign.center),
                           _tableCell(g.name),
                           _tableCell('${g.pax}', align: pw.TextAlign.center),
-                          _tableCell(g.tableNumber.isEmpty ? '-' : g.tableNumber, align: pw.TextAlign.center),
+                          _tableCell(
+                            g.tableNumber.isEmpty ? '-' : g.tableNumber,
+                            align: pw.TextAlign.center,
+                          ),
                           _tableCellColored(_rsvpLabel(g.rsvpStatus), _rsvpColor(g.rsvpStatus)),
                           _tableCellColored(
-                            g.isInvitationSent ? '✓ Terkirim' : '- Belum',
+                            g.isInvitationSent ? 'Terkirim' : 'Belum',
                             g.isInvitationSent ? _successGreen : _textMuted,
                           ),
                         ],
@@ -187,33 +196,31 @@ class PdfService {
             pw.Center(
               child: pw.Text(
                 'Belum ada susunan acara yang dicatat.',
-                style: pw.TextStyle(color: _textMuted),
+                style: const pw.TextStyle(color: _textMuted),
               ),
             )
           else
             ...sorted.map((r) => pw.Container(
-              margin: const pw.EdgeInsets.only(bottom: 10),
-              padding: const pw.EdgeInsets.all(10),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.white,
-                borderRadius: pw.BorderRadius.circular(8),
-                border: pw.Border.all(color: PdfColor.fromInt(0xFFEFE8E8)),
-              ),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  // Time badge
-                  pw.Container(
-                    width: 70,
-                    padding: const pw.EdgeInsets.all(6),
-                    decoration: pw.BoxDecoration(
-                      color: PdfColor.fromInt(0xFFFAF4E1),
-                      borderRadius: pw.BorderRadius.circular(6),
-                    ),
-                    child: pw.Column(
-                      children: [
-                        pw.Text(
-                          r.timeRange,
+                  margin: const pw.EdgeInsets.only(bottom: 10),
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(8),
+                    border: pw.Border.all(color: _borderLight),
+                  ),
+                  child: pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      // Time badge
+                      pw.Container(
+                        width: 75,
+                        padding: const pw.EdgeInsets.all(6),
+                        decoration: pw.BoxDecoration(
+                          color: _goldLight,
+                          borderRadius: pw.BorderRadius.circular(6),
+                        ),
+                        child: pw.Text(
+                          r.timeRange.isEmpty ? '-' : r.timeRange,
                           textAlign: pw.TextAlign.center,
                           style: pw.TextStyle(
                             fontSize: 10,
@@ -221,49 +228,44 @@ class PdfService {
                             color: _accentColor,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  pw.SizedBox(width: 10),
-                  pw.Expanded(
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          r.activity,
-                          style: pw.TextStyle(
-                            fontSize: 12,
-                            fontWeight: pw.FontWeight.bold,
-                            color: _textDark,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
-                        pw.Row(
+                      ),
+                      pw.SizedBox(width: 10),
+                      pw.Expanded(
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            _chip(r.eventType, _primaryColor),
-                            if (r.pic.isNotEmpty) ...[
-                              pw.SizedBox(width: 6),
-                              _chip('PIC: ${r.pic}', PdfColor.fromInt(0xFF4A90E2)),
-                            ],
-                            if (r.location.isNotEmpty) ...[
-                              pw.SizedBox(width: 6),
-                              _chip('📍 ${r.location}', _textMuted),
+                            pw.Text(
+                              r.activity,
+                              style: pw.TextStyle(
+                                fontSize: 12,
+                                fontWeight: pw.FontWeight.bold,
+                                color: _textDark,
+                              ),
+                            ),
+                            pw.SizedBox(height: 4),
+                            pw.Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                _chip(r.eventType, _primaryColor),
+                                if (r.pic.isNotEmpty) _chip('PIC: ${r.pic}', _infoBlue),
+                                if (r.location.isNotEmpty)
+                                  _chip('Lokasi: ${r.location}', _textMuted),
+                              ],
+                            ),
+                            if (r.notes.isNotEmpty) ...[
+                              pw.SizedBox(height: 4),
+                              pw.Text(
+                                r.notes,
+                                style: const pw.TextStyle(fontSize: 10, color: _textMuted),
+                              ),
                             ],
                           ],
                         ),
-                        if (r.notes.isNotEmpty) ...[
-                          pw.SizedBox(height: 4),
-                          pw.Text(
-                            r.notes,
-                            style: pw.TextStyle(fontSize: 10, color: _textMuted),
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
         ],
       ),
     );
@@ -284,7 +286,10 @@ class PdfService {
     final doc = pw.Document();
 
     final totalEstimated = expenses.fold(0.0, (s, e) => s + e.estimatedCost);
-    final totalActual = expenses.fold(0.0, (s, e) => s + (e.actualCost > 0 ? e.actualCost : e.estimatedCost));
+    final totalActual = expenses.fold(
+      0.0,
+      (s, e) => s + (e.actualCost > 0 ? e.actualCost : e.estimatedCost),
+    );
     final totalPaid = expenses.fold(0.0, (s, e) => s + e.paidAmount);
     final remaining = totalBudget - totalActual;
 
@@ -312,14 +317,14 @@ class PdfService {
             child: pw.Column(
               children: [
                 _budgetRow('Total Anggaran', totalBudget, _textDark, bold: true),
-                pw.Divider(color: PdfColor.fromInt(0xFFEFE8E8)),
+                pw.Divider(color: _borderLight),
                 _budgetRow('Total Estimasi', totalEstimated, _textMuted),
-                _budgetRow('Total Aktual', totalActual, _textMuted),
+                _budgetRow('Total Aktual / Riil', totalActual, _textMuted),
                 _budgetRow('Sudah Dibayar', totalPaid, _successGreen),
-                pw.Divider(color: PdfColor.fromInt(0xFFEFE8E8)),
+                pw.Divider(color: _borderLight),
                 _budgetRow(
-                  'Sisa Anggaran',
-                  remaining,
+                  remaining >= 0 ? 'Sisa Anggaran' : 'Defisit Anggaran',
+                  remaining.abs(),
                   remaining >= 0 ? _successGreen : _errorRed,
                   bold: true,
                 ),
@@ -328,86 +333,100 @@ class PdfService {
           ),
           pw.SizedBox(height: 20),
 
-          // Per category
-          ...grouped.entries.map((entry) {
-            final catTotal = entry.value.fold(0.0, (s, e) => s + (e.actualCost > 0 ? e.actualCost : e.estimatedCost));
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: pw.BoxDecoration(
-                        color: _accentColor,
-                        borderRadius: pw.BorderRadius.circular(6),
-                      ),
-                      child: pw.Text(
-                        entry.key,
-                        style: pw.TextStyle(
-                          color: PdfColors.white,
-                          fontWeight: pw.FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                    pw.Text(
-                      _formatCurrency(catTotal),
-                      style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 11,
-                        color: _textDark,
-                      ),
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 6),
-                pw.Table(
-                  border: pw.TableBorder.all(color: PdfColor.fromInt(0xFFEFE8E8), width: 0.5),
-                  columnWidths: {
-                    0: const pw.FlexColumnWidth(3),
-                    1: const pw.FlexColumnWidth(2),
-                    2: const pw.FlexColumnWidth(2),
-                    3: const pw.FlexColumnWidth(2),
-                    4: const pw.FlexColumnWidth(1.5),
-                  },
-                  children: [
-                    pw.TableRow(
-                      decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF9EEF0)),
-                      children: [
-                        _tableHeader('Item'),
-                        _tableHeader('Estimasi'),
-                        _tableHeader('Aktual'),
-                        _tableHeader('Dibayar'),
-                        _tableHeader('Status'),
-                      ],
-                    ),
-                    ...entry.value.asMap().entries.map((e) {
-                      final item = e.value;
-                      final isPaid = item.isPaid;
-                      return pw.TableRow(
+          if (grouped.isEmpty)
+            pw.Center(
+              child: pw.Text(
+                'Belum ada pos pengeluaran yang dicatat.',
+                style: const pw.TextStyle(color: _textMuted),
+              ),
+            )
+          else
+            // Per category
+            ...grouped.entries.map((entry) {
+              final catTotal = entry.value.fold(
+                0.0,
+                (s, e) => s + (e.actualCost > 0 ? e.actualCost : e.estimatedCost),
+              );
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Container(
+                        padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: pw.BoxDecoration(
-                          color: e.key.isEven ? PdfColors.white : PdfColor.fromInt(0xFFFBF9F9),
+                          color: _accentColor,
+                          borderRadius: pw.BorderRadius.circular(6),
                         ),
-                        children: [
-                          _tableCell(item.itemName),
-                          _tableCell(_formatCurrency(item.estimatedCost)),
-                          _tableCell(_formatCurrency(item.actualCost > 0 ? item.actualCost : item.estimatedCost)),
-                          _tableCell(_formatCurrency(item.paidAmount)),
-                          _tableCellColored(
-                            isPaid ? 'Lunas' : 'Belum',
-                            isPaid ? _successGreen : _warningOrange,
+                        child: pw.Text(
+                          entry.key,
+                          style: pw.TextStyle(
+                            color: PdfColors.white,
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 10,
                           ),
+                        ),
+                      ),
+                      pw.Text(
+                        _formatCurrency(catTotal),
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 11,
+                          color: _textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.SizedBox(height: 6),
+                  pw.Table(
+                    border: pw.TableBorder.all(color: _borderLight, width: 0.5),
+                    columnWidths: const {
+                      0: pw.FlexColumnWidth(3),
+                      1: pw.FlexColumnWidth(2),
+                      2: pw.FlexColumnWidth(2),
+                      3: pw.FlexColumnWidth(2),
+                      4: pw.FlexColumnWidth(1.5),
+                    },
+                    children: [
+                      pw.TableRow(
+                        decoration: const pw.BoxDecoration(color: _roseLight),
+                        children: [
+                          _tableHeader('Item'),
+                          _tableHeader('Estimasi'),
+                          _tableHeader('Aktual'),
+                          _tableHeader('Dibayar'),
+                          _tableHeader('Status'),
                         ],
-                      );
-                    }),
-                  ],
-                ),
-                pw.SizedBox(height: 16),
-              ],
-            );
-          }),
+                      ),
+                      ...entry.value.asMap().entries.map((e) {
+                        final item = e.value;
+                        final statusColor = item.status == PaymentStatus.paid
+                            ? _successGreen
+                            : item.status == PaymentStatus.downPayment
+                                ? _warningOrange
+                                : _errorRed;
+                        return pw.TableRow(
+                          decoration: pw.BoxDecoration(
+                            color: e.key.isEven ? PdfColors.white : _bgLight,
+                          ),
+                          children: [
+                            _tableCell(item.title),
+                            _tableCell(_formatCurrency(item.estimatedCost)),
+                            _tableCell(_formatCurrency(
+                              item.actualCost > 0 ? item.actualCost : item.estimatedCost,
+                            )),
+                            _tableCell(_formatCurrency(item.paidAmount)),
+                            _tableCellColored(item.status.shortLabel, statusColor),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                  pw.SizedBox(height: 16),
+                ],
+              );
+            }),
         ],
       ),
     );
@@ -432,14 +451,15 @@ class PdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            '💍 Teman Nikah',
+            'TEMAN NIKAH',
             style: pw.TextStyle(
               color: PdfColors.white,
-              fontSize: 10,
-              fontWeight: pw.FontWeight.normal,
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+              letterSpacing: 1.5,
             ),
           ),
-          pw.SizedBox(height: 2),
+          pw.SizedBox(height: 3),
           pw.Text(
             title,
             style: pw.TextStyle(
@@ -450,7 +470,7 @@ class PdfService {
           ),
           pw.SizedBox(height: 4),
           pw.Text(
-            '${info.groomName} & ${info.brideName}  •  ${_formatDate(info.weddingDate)}  •  ${info.venue}',
+            '${info.groomName} & ${info.brideName}  |  ${_formatDate(info.weddingDate)}  |  ${info.weddingLocation}',
             style: const pw.TextStyle(color: PdfColors.white, fontSize: 10),
           ),
         ],
@@ -463,7 +483,7 @@ class PdfService {
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
         pw.Text(
-          'Dibuat dengan Teman Nikah  •  ${DateFormat('d MMM yyyy HH:mm', 'id_ID').format(DateTime.now())}',
+          'Dibuat dengan Teman Nikah  |  ${DateFormat('d MMM yyyy HH:mm', 'id_ID').format(DateTime.now())}',
           style: const pw.TextStyle(color: _textMuted, fontSize: 9),
         ),
         pw.Text(
@@ -477,7 +497,10 @@ class PdfService {
   pw.Widget _statBox(String label, String value) {
     return pw.Column(
       children: [
-        pw.Text(value, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: _textDark)),
+        pw.Text(
+          value,
+          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: _textDark),
+        ),
         pw.SizedBox(height: 2),
         pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: _textMuted)),
       ],
@@ -497,14 +520,21 @@ class PdfService {
   pw.Widget _tableCell(String text, {pw.TextAlign align = pw.TextAlign.left}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-      child: pw.Text(text, textAlign: align, style: const pw.TextStyle(fontSize: 9, color: _textDark)),
+      child: pw.Text(
+        text,
+        textAlign: align,
+        style: const pw.TextStyle(fontSize: 9, color: _textDark),
+      ),
     );
   }
 
   pw.Widget _tableCellColored(String text, PdfColor color) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-      child: pw.Text(text, style: pw.TextStyle(fontSize: 9, color: color, fontWeight: pw.FontWeight.bold)),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(fontSize: 9, color: color, fontWeight: pw.FontWeight.bold),
+      ),
     );
   }
 
@@ -515,7 +545,10 @@ class PdfService {
         color: color.shade(0.15),
         borderRadius: pw.BorderRadius.circular(4),
       ),
-      child: pw.Text(text, style: pw.TextStyle(fontSize: 8, color: color, fontWeight: pw.FontWeight.bold)),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(fontSize: 8, color: color, fontWeight: pw.FontWeight.bold),
+      ),
     );
   }
 
@@ -525,8 +558,22 @@ class PdfService {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(label, style: pw.TextStyle(fontSize: 11, color: _textDark, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)),
-          pw.Text(_formatCurrency(amount), style: pw.TextStyle(fontSize: 11, color: color, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+          pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 11,
+              color: _textDark,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
+          pw.Text(
+            _formatCurrency(amount),
+            style: pw.TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
@@ -534,19 +581,27 @@ class PdfService {
 
   String _rsvpLabel(RsvpStatus s) {
     switch (s) {
-      case RsvpStatus.attending: return 'Hadir';
-      case RsvpStatus.declined: return 'Tidak Hadir';
-      case RsvpStatus.tentative: return 'Ragu';
-      case RsvpStatus.pending: return 'Pending';
+      case RsvpStatus.attending:
+        return 'Hadir';
+      case RsvpStatus.declined:
+        return 'Tidak Hadir';
+      case RsvpStatus.tentative:
+        return 'Ragu';
+      case RsvpStatus.pending:
+        return 'Pending';
     }
   }
 
   PdfColor _rsvpColor(RsvpStatus s) {
     switch (s) {
-      case RsvpStatus.attending: return _successGreen;
-      case RsvpStatus.declined: return _errorRed;
-      case RsvpStatus.tentative: return _warningOrange;
-      case RsvpStatus.pending: return _textMuted;
+      case RsvpStatus.attending:
+        return _successGreen;
+      case RsvpStatus.declined:
+        return _errorRed;
+      case RsvpStatus.tentative:
+        return _warningOrange;
+      case RsvpStatus.pending:
+        return _textMuted;
     }
   }
 }

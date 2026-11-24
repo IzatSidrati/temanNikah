@@ -52,12 +52,13 @@ class NotificationService {
     );
   }
 
-  /// Jadwalkan notifikasi H-X sebelum hari nikah
-  Future<void> scheduleWeddingReminders(DateTime weddingDate) async {
+  /// Jadwalkan notifikasi H-X sebelum hari nikah, mengembalikan jumlah pengingat terjadwal
+  Future<int> scheduleWeddingReminders(DateTime weddingDate) async {
     // Batalkan semua notifikasi lama terlebih dulu
     await cancelAllReminders();
 
     final now = DateTime.now();
+    int scheduledCount = 0;
 
     final reminders = [
       {'days': 30, 'id': 1, 'title': '30 Hari Lagi! 🎊', 'body': 'Sebulan lagi hari pernikahan tiba. Cek checklist segera!'},
@@ -80,19 +81,36 @@ class NotificationService {
       );
 
       if (notifTime.isAfter(now)) {
-        await _plugin.zonedSchedule(
-          r['id'] as int,
-          r['title'] as String,
-          r['body'] as String,
-          tz.TZDateTime.from(notifTime, tz.local),
-          _buildDetails(),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          payload: 'wedding_reminder_${r['id']}',
-        );
+        try {
+          await _plugin.zonedSchedule(
+            r['id'] as int,
+            r['title'] as String,
+            r['body'] as String,
+            tz.TZDateTime.from(notifTime, tz.local),
+            _buildDetails(),
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: 'wedding_reminder_${r['id']}',
+          );
+        } catch (_) {
+          // Fallback ke inexact jika izin exact alarm dibatasi di Android 14+
+          await _plugin.zonedSchedule(
+            r['id'] as int,
+            r['title'] as String,
+            r['body'] as String,
+            tz.TZDateTime.from(notifTime, tz.local),
+            _buildDetails(),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: 'wedding_reminder_${r['id']}',
+          );
+        }
+        scheduledCount++;
       }
     }
+    return scheduledCount;
   }
 
   /// Batalkan semua notifikasi pengingat

@@ -46,6 +46,8 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           items = items.where((c) => c.isDone).toList();
         }
 
+        final palette = provider.currentTheme;
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Checklist & Timeline'),
@@ -57,9 +59,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryRoseLight,
+                  color: palette.primaryLight,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primaryRose.withOpacity(0.2)),
+                  border: Border.all(color: palette.primary.withOpacity(0.2)),
                 ),
                 child: Column(
                   children: [
@@ -70,7 +72,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                           'Progress Persiapan',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryRoseDark,
+                            color: palette.primaryDark,
                             fontSize: 14,
                           ),
                         ),
@@ -78,7 +80,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                           '${provider.completedChecklistCount} dari ${provider.totalChecklistCount} selesai (${(provider.checklistProgress * 100).toInt()}%)',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryRoseDark,
+                            color: palette.primaryDark,
                             fontSize: 12,
                           ),
                         ),
@@ -91,7 +93,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         value: provider.checklistProgress,
                         minHeight: 8,
                         backgroundColor: Colors.white,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryRose),
+                        valueColor: AlwaysStoppedAnimation<Color>(palette.primary),
                       ),
                     ),
                   ],
@@ -113,7 +115,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       child: ChoiceChip(
                         label: Text(cat),
                         selected: isSelected,
-                        selectedColor: AppTheme.primaryRose,
+                        selectedColor: palette.primary,
                         labelStyle: GoogleFonts.poppins(
                           color: isSelected ? Colors.white : AppTheme.textDark,
                           fontSize: 12,
@@ -121,7 +123,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         ),
                         backgroundColor: Colors.white,
                         side: BorderSide(
-                          color: isSelected ? AppTheme.primaryRose : AppTheme.cardBorder,
+                          color: isSelected ? palette.primary : AppTheme.cardBorder,
                         ),
                         onSelected: (selected) {
                           if (selected) {
@@ -175,7 +177,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = items[index];
@@ -186,7 +188,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                               child: ListTile(
                                 leading: Checkbox(
                                   value: item.isDone,
-                                  activeColor: AppTheme.primaryRose,
+                                  activeColor: palette.primary,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -215,14 +217,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: AppTheme.primaryRoseLight,
+                                            color: palette.primaryLight,
                                             borderRadius: BorderRadius.circular(4),
                                           ),
                                           child: Text(
                                             item.category,
                                             style: GoogleFonts.poppins(
                                               fontSize: 10,
-                                              color: AppTheme.primaryRoseDark,
+                                              color: palette.primaryDark,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -315,7 +317,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryRose,
+            backgroundColor: palette.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: Text(
               'Tambah Tugas',

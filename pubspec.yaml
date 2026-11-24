@@ -23,6 +23,8 @@ dependencies:
   # Notifikasi Lokal
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
+  # Google AdMob Ads
+  google_mobile_ads: ^5.1.0
 
 dev_dependencies:
   flutter_test:

@@ -5,7 +5,6 @@ import 'package:uuid/uuid.dart';
 import '../providers/wedding_provider.dart';
 import '../models/rundown_item.dart';
 import '../theme/app_theme.dart';
-import '../services/pdf_service.dart';
 
 class RundownScreen extends StatefulWidget {
   const RundownScreen({super.key});
@@ -34,43 +33,17 @@ class _RundownScreenState extends State<RundownScreen> {
           items = items.where((r) => r.eventType == _selectedEvent).toList();
         }
 
+        final palette = provider.currentTheme;
+
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Susunan Acara (Rundown)'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
-                tooltip: 'Ekspor PDF',
-                onPressed: () async {
-                  if (provider.rundowns.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Belum ada rundown untuk diekspor.')),
-                    );
-                    return;
-                  }
-                  try {
-                    await PdfService().exportRundownPdf(
-                      context: context,
-                      info: provider.weddingInfo,
-                      rundowns: provider.rundowns,
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Gagal ekspor PDF: $e')),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
           body: Column(
             children: [
               // Event Type Filter Chips
               SizedBox(
-                height: 44,
+                height: 48,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   itemCount: _eventTypes.length,
                   itemBuilder: (context, index) {
                     final type = _eventTypes[index];
@@ -80,7 +53,7 @@ class _RundownScreenState extends State<RundownScreen> {
                       child: ChoiceChip(
                         label: Text(type),
                         selected: isSelected,
-                        selectedColor: AppTheme.primaryRose,
+                        selectedColor: palette.primary,
                         labelStyle: GoogleFonts.poppins(
                           color: isSelected ? Colors.white : AppTheme.textDark,
                           fontSize: 12,
@@ -88,7 +61,7 @@ class _RundownScreenState extends State<RundownScreen> {
                         ),
                         backgroundColor: Colors.white,
                         side: BorderSide(
-                          color: isSelected ? AppTheme.primaryRose : AppTheme.cardBorder,
+                          color: isSelected ? palette.primary : AppTheme.cardBorder,
                         ),
                         onSelected: (selected) {
                           if (selected) {
@@ -120,7 +93,7 @@ class _RundownScreenState extends State<RundownScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = items[index];
@@ -283,7 +256,7 @@ class _RundownScreenState extends State<RundownScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryRose,
+            backgroundColor: palette.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: Text(
               'Tambah Acara',

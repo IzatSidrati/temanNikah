@@ -6,6 +6,7 @@ import 'theme/app_theme.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/notification_service.dart';
+import 'services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,13 @@ void main() async {
     await NotificationService().initialize();
   } catch (e) {
     debugPrint('NotificationService initialization error: $e');
+  }
+
+  // Inisialisasi Google AdMob (Banner, Interstitial, Rewarded, Native)
+  try {
+    await AdService().initialize();
+  } catch (e) {
+    debugPrint('AdService initialization error: $e');
   }
 
   runApp(const NikahPlanApp());

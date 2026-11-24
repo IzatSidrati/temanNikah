@@ -47,18 +47,17 @@ class _VendorScreenState extends State<VendorScreen> {
           items = items.where((v) => v.category == _selectedCategory).toList();
         }
 
+        final palette = provider.currentTheme;
+
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Daftar Mitra Vendor'),
-          ),
           body: Column(
             children: [
               // Category Chips
               SizedBox(
-                height: 44,
+                height: 48,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   itemCount: _categories.length,
                   itemBuilder: (context, index) {
                     final cat = _categories[index];
@@ -68,7 +67,7 @@ class _VendorScreenState extends State<VendorScreen> {
                       child: ChoiceChip(
                         label: Text(cat),
                         selected: isSelected,
-                        selectedColor: AppTheme.primaryRose,
+                        selectedColor: palette.primary,
                         labelStyle: GoogleFonts.poppins(
                           color: isSelected ? Colors.white : AppTheme.textDark,
                           fontSize: 12,
@@ -76,7 +75,7 @@ class _VendorScreenState extends State<VendorScreen> {
                         ),
                         backgroundColor: Colors.white,
                         side: BorderSide(
-                          color: isSelected ? AppTheme.primaryRose : AppTheme.cardBorder,
+                          color: isSelected ? palette.primary : AppTheme.cardBorder,
                         ),
                         onSelected: (selected) {
                           if (selected) {
@@ -108,7 +107,7 @@ class _VendorScreenState extends State<VendorScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = items[index];
@@ -274,7 +273,7 @@ class _VendorScreenState extends State<VendorScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryRose,
+            backgroundColor: palette.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: Text(
               'Tambah Vendor',

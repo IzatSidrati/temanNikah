@@ -11,6 +11,8 @@ import '../widgets/wedding_edit_dialog.dart';
 import '../services/notification_service.dart';
 import '../services/backup_service.dart';
 import '../services/pdf_service.dart';
+import '../services/ad_service.dart';
+import '../widgets/ad_native_widget.dart';
 import 'onboarding_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -34,6 +36,7 @@ class DashboardScreen extends StatelessWidget {
         }
 
         final info = provider.weddingInfo;
+        final palette = provider.currentTheme;
         final upcomingChecklist = provider.checklist.where((c) => !c.isDone).take(3).toList();
 
         return Scaffold(
@@ -41,7 +44,7 @@ class DashboardScreen extends StatelessWidget {
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.favorite, color: AppTheme.primaryRose, size: 20),
+                Icon(Icons.favorite, color: palette.primary, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Teman Nikah',
@@ -54,6 +57,19 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
             actions: [
+              ValueListenableBuilder<bool>(
+                valueListenable: AdService().isAdFreeNotifier,
+                builder: (context, isAdFree, _) {
+                  return IconButton(
+                    icon: Icon(
+                      isAdFree ? Icons.workspace_premium : Icons.card_giftcard_outlined,
+                      color: isAdFree ? AppTheme.accentGold : palette.primary,
+                    ),
+                    tooltip: isAdFree ? 'Mode Bebas Iklan Aktif' : 'Bebas Iklan 30 Menit',
+                    onPressed: () => _showRewardedAdDialog(context, palette),
+                  );
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.settings_outlined, color: AppTheme.textDark),
                 tooltip: 'Pengaturan',
@@ -64,7 +80,7 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           body: RefreshIndicator(
-            color: AppTheme.primaryRose,
+            color: palette.primary,
             onRefresh: () => provider.loadData(),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -157,6 +173,9 @@ class DashboardScreen extends StatelessWidget {
                     onTap: () => onNavigateToTab(2),
                   ),
 
+                  // 3b. Native Ad Card (otomatis tersembunyi jika mode Bebas Iklan aktif)
+                  AdNativeWidget(accentColor: palette.primary),
+
                   const SizedBox(height: 24),
 
                   // 4. Checklist Terdekat Yang Perlu Dilakukan
@@ -181,7 +200,7 @@ class DashboardScreen extends StatelessWidget {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                           leading: Checkbox(
                             value: item.isDone,
-                            activeColor: AppTheme.primaryRose,
+                            activeColor: palette.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -200,14 +219,14 @@ class DashboardScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryRoseLight,
+                                  color: palette.primaryLight,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   item.category,
                                   style: GoogleFonts.poppins(
                                     fontSize: 10,
-                                    color: AppTheme.primaryRoseDark,
+                                    color: palette.primaryDark,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -326,6 +345,13 @@ class DashboardScreen extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,9 +499,10 @@ class DashboardScreen extends StatelessWidget {
                   subtitle: Text('${provider.guests.length} tamu • ${provider.totalGuests} pax'),
                   trailing: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     if (provider.guests.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(content: Text('Belum ada data tamu yang bisa diekspor.')),
                       );
                       return;
@@ -487,7 +514,7 @@ class DashboardScreen extends StatelessWidget {
                         guests: provider.guests,
                       );
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Gagal ekspor PDF: $e')),
                       );
                     }
@@ -500,9 +527,10 @@ class DashboardScreen extends StatelessWidget {
                   subtitle: Text('${provider.rundowns.length} agenda acara'),
                   trailing: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     if (provider.rundowns.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(content: Text('Belum ada rundown yang bisa diekspor.')),
                       );
                       return;
@@ -514,7 +542,7 @@ class DashboardScreen extends StatelessWidget {
                         rundowns: provider.rundowns,
                       );
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Gagal ekspor PDF: $e')),
                       );
                     }
@@ -527,6 +555,7 @@ class DashboardScreen extends StatelessWidget {
                   subtitle: Text('${provider.expenses.length} item pengeluaran'),
                   trailing: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     try {
                       await PdfService().exportBudgetPdf(
@@ -536,7 +565,7 @@ class DashboardScreen extends StatelessWidget {
                         totalBudget: provider.totalBudget,
                       );
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('Gagal ekspor PDF: $e')),
                       );
                     }
@@ -553,11 +582,12 @@ class DashboardScreen extends StatelessWidget {
                   title: const Text('Aktifkan Pengingat Hari-H'),
                   subtitle: const Text('Notifikasi otomatis H-30, H-14, H-7, H-3, H-1, Hari-H'),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     final service = NotificationService();
                     final granted = await service.requestPermission();
                     if (!granted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('Izin notifikasi ditolak. Aktifkan di Pengaturan HP.'),
                           backgroundColor: AppTheme.errorRed,
@@ -565,10 +595,11 @@ class DashboardScreen extends StatelessWidget {
                       );
                       return;
                     }
-                    await service.scheduleWeddingReminders(provider.weddingInfo.weddingDate);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('✅ Notifikasi pengingat hari-H berhasil diaktifkan!'),
+                    final count = await service.scheduleWeddingReminders(provider.weddingInfo.weddingDate);
+                    await service.showTestNotification();
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('✅ $count notifikasi pengingat hari-H berhasil dijadwalkan!'),
                         backgroundColor: AppTheme.successGreen,
                       ),
                     );
@@ -579,9 +610,10 @@ class DashboardScreen extends StatelessWidget {
                   leading: const Icon(Icons.notifications_off_outlined, color: AppTheme.textMuted),
                   title: const Text('Matikan Semua Notifikasi'),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     await NotificationService().cancelAllReminders();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('Semua notifikasi pengingat dimatikan.')),
                     );
                   },
@@ -597,10 +629,11 @@ class DashboardScreen extends StatelessWidget {
                   title: const Text('Ekspor Backup Data'),
                   subtitle: const Text('Simpan semua data ke file JSON'),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     final success = await BackupService().exportBackup(context);
                     if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(
                           content: Text('✅ Backup data berhasil diekspor!'),
                           backgroundColor: AppTheme.successGreen,
@@ -619,6 +652,65 @@ class DashboardScreen extends StatelessWidget {
                     _showRestoreDialog(context, provider);
                   },
                 ),
+
+                const Divider(),
+
+                // ── BAGIAN: Iklan & Mode Bebas Iklan (AdMob) ─────
+                _sectionLabel(
+                  AdService.useTestAds ? 'Iklan AdMob (Mode Debug / Test)' : 'Mode Bebas Iklan',
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.workspace_premium_outlined, color: AppTheme.accentGold),
+                  title: const Text('Bebas Iklan 30 Menit'),
+                  subtitle: Text(
+                    AdService().isAdFree
+                        ? 'Aktif — sisa ${AdService().remainingAdFreeMinutes} menit'
+                        : 'Tonton video singkat untuk sembunyikan semua iklan',
+                  ),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showRewardedAdDialog(context, provider.currentTheme);
+                  },
+                ),
+                if (AdService.useTestAds)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.ad_units_outlined, color: AppTheme.infoBlue),
+                    title: const Text('Tampilkan Iklan Interstitial (Debug)'),
+                    subtitle: Text(
+                      AdService().isInterstitialReady
+                          ? 'Siap ditampilkan (Test Ad)'
+                          : 'Sedang memuat iklan...',
+                    ),
+                    onTap: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      Navigator.pop(ctx);
+                      final shown = await AdService().showInterstitialAd(force: true);
+                      if (!shown) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Iklan Interstitial sedang dimuat, coba beberapa detik lagi.'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                if (AdService.useTestAds && AdService().isAdFree)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.visibility_outlined, color: AppTheme.textMuted),
+                    title: const Text('Tampilkan Kembali Iklan (Reset Test)'),
+                    subtitle: const Text('Matikan mode bebas iklan untuk uji coba Banner & Native'),
+                    onTap: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      Navigator.pop(ctx);
+                      await AdService().clearAdFreeForTesting();
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Mode bebas iklan dimatikan, iklan aktif kembali.')),
+                      );
+                    },
+                  ),
 
                 const Divider(),
 
@@ -712,6 +804,74 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  void _showRewardedAdDialog(BuildContext context, WeddingThemePalette palette) {
+    final adService = AdService();
+    final isAdFree = adService.isAdFree;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              isAdFree ? Icons.workspace_premium : Icons.card_giftcard_rounded,
+              color: isAdFree ? AppTheme.accentGold : palette.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                isAdFree ? 'Bebas Iklan Aktif' : 'Bebas Iklan 30 Menit',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isAdFree
+              ? 'Mode bebas iklan sedang aktif selama ${adService.remainingAdFreeMinutes} menit lagi. Anda dapat menonton video lagi untuk memperpanjang 30 menit.'
+              : 'Tonton 1 video iklan singkat (Rewarded Ad) untuk menyembunyikan Banner, Native, dan Interstitial Ad selama 30 menit penuh.',
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tutup'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: palette.primary),
+            icon: const Icon(Icons.play_circle_outline, size: 18),
+            label: const Text('Tonton Video'),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(ctx);
+              await adService.showRewardedAd(
+                onRewardEarned: (reward) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('🎉 Selamat! Mode Bebas Iklan aktif selama 30 menit.'),
+                      backgroundColor: AppTheme.successGreen,
+                    ),
+                  );
+                },
+                onAdNotReady: () {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Video Rewarded Ad sedang dimuat, silakan coba beberapa detik lagi.'),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showRestoreDialog(BuildContext context, WeddingProvider provider) {
     final controller = TextEditingController();
     showDialog(
@@ -747,12 +907,13 @@ class DashboardScreen extends StatelessWidget {
             onPressed: () async {
               final json = controller.text.trim();
               if (json.isEmpty) return;
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
               final result = await BackupService().importBackup(json);
               if (result.success) {
                 await provider.loadData();
               }
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(result.message),
                   backgroundColor: result.success ? AppTheme.successGreen : AppTheme.errorRed,

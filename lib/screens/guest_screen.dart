@@ -61,6 +61,8 @@ class _GuestScreenState extends State<GuestScreen> {
           items = items.where((g) => g.rsvpStatus == RsvpStatus.pending).toList();
         }
 
+        final palette = provider.currentTheme;
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Daftar Tamu & RSVP'),
@@ -69,8 +71,9 @@ class _GuestScreenState extends State<GuestScreen> {
                 icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
                 tooltip: 'Ekspor PDF',
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   if (provider.guests.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(content: Text('Belum ada tamu untuk diekspor.')),
                     );
                     return;
@@ -82,7 +85,7 @@ class _GuestScreenState extends State<GuestScreen> {
                       guests: provider.guests,
                     );
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('Gagal ekspor PDF: $e')),
                     );
                   }
@@ -155,7 +158,7 @@ class _GuestScreenState extends State<GuestScreen> {
                       child: ChoiceChip(
                         label: Text(cat),
                         selected: isSelected,
-                        selectedColor: AppTheme.primaryRose,
+                        selectedColor: palette.primary,
                         labelStyle: GoogleFonts.poppins(
                           color: isSelected ? Colors.white : AppTheme.textDark,
                           fontSize: 12,
@@ -163,7 +166,7 @@ class _GuestScreenState extends State<GuestScreen> {
                         ),
                         backgroundColor: Colors.white,
                         side: BorderSide(
-                          color: isSelected ? AppTheme.primaryRose : AppTheme.cardBorder,
+                          color: isSelected ? palette.primary : AppTheme.cardBorder,
                         ),
                         onSelected: (selected) {
                           if (selected) {
@@ -218,7 +221,7 @@ class _GuestScreenState extends State<GuestScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = items[index];
@@ -393,7 +396,7 @@ class _GuestScreenState extends State<GuestScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryRose,
+            backgroundColor: palette.primary,
             icon: const Icon(Icons.person_add, color: Colors.white),
             label: Text(
               'Tambah Tamu',

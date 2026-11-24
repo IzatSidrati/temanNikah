@@ -63,7 +63,7 @@ class BackupService {
 
       // Validasi format backup
       if (backupData['app'] != 'Teman Nikah' || backupData['data'] == null) {
-        return ImportResult(
+        return const ImportResult(
           success: false,
           message: 'Format file backup tidak valid atau bukan dari Teman Nikah.',
         );
@@ -110,7 +110,7 @@ class BackupService {
         message: 'Data berhasil dipulihkan dari backup tanggal $dateStr.',
       );
     } on FormatException {
-      return ImportResult(
+      return const ImportResult(
         success: false,
         message: 'File backup rusak atau tidak bisa dibaca. Pastikan file JSON valid.',
       );

@@ -6,6 +6,7 @@ import '../providers/wedding_provider.dart';
 import '../models/expense_item.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
+import '../services/pdf_service.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -50,10 +51,32 @@ class _BudgetScreenState extends State<BudgetScreen> {
         }
 
         final isOverBudget = provider.totalActualExpense > provider.totalBudget;
+        final palette = provider.currentTheme;
 
         return Scaffold(
           appBar: AppBar(
             title: const Text('Anggaran & Pengeluaran'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
+                tooltip: 'Ekspor PDF Anggaran',
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  try {
+                    await PdfService().exportBudgetPdf(
+                      context: context,
+                      info: provider.weddingInfo,
+                      expenses: provider.expenses,
+                      totalBudget: provider.totalBudget,
+                    );
+                  } catch (e) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Gagal ekspor PDF: $e')),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
           body: Column(
             children: [
@@ -122,7 +145,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         minHeight: 8,
                         backgroundColor: AppTheme.cardBorder,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isOverBudget ? AppTheme.errorRed : AppTheme.primaryRose,
+                          isOverBudget ? AppTheme.errorRed : palette.primary,
                         ),
                       ),
                     ),
@@ -161,7 +184,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       child: ChoiceChip(
                         label: Text(cat),
                         selected: isSelected,
-                        selectedColor: AppTheme.primaryRose,
+                        selectedColor: palette.primary,
                         labelStyle: GoogleFonts.poppins(
                           color: isSelected ? Colors.white : AppTheme.textDark,
                           fontSize: 12,
@@ -169,7 +192,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         ),
                         backgroundColor: Colors.white,
                         side: BorderSide(
-                          color: isSelected ? AppTheme.primaryRose : AppTheme.cardBorder,
+                          color: isSelected ? palette.primary : AppTheme.cardBorder,
                         ),
                         onSelected: (selected) {
                           if (selected) {
@@ -225,7 +248,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 88),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final item = items[index];
@@ -352,7 +375,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryRose,
+            backgroundColor: palette.primary,
             icon: const Icon(Icons.add, color: Colors.white),
             label: Text(
               'Catat Pengeluaran',
