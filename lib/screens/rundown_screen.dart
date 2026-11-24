@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../providers/wedding_provider.dart';
 import '../models/rundown_item.dart';
 import '../theme/app_theme.dart';
+import '../services/pdf_service.dart';
 
 class RundownScreen extends StatefulWidget {
   const RundownScreen({super.key});
@@ -36,6 +37,31 @@ class _RundownScreenState extends State<RundownScreen> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Susunan Acara (Rundown)'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
+                tooltip: 'Ekspor PDF',
+                onPressed: () async {
+                  if (provider.rundowns.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Belum ada rundown untuk diekspor.')),
+                    );
+                    return;
+                  }
+                  try {
+                    await PdfService().exportRundownPdf(
+                      context: context,
+                      info: provider.weddingInfo,
+                      rundowns: provider.rundowns,
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Gagal ekspor PDF: $e')),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
           body: Column(
             children: [

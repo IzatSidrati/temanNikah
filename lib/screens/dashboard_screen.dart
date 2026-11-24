@@ -8,6 +8,10 @@ import '../widgets/countdown_widget.dart';
 import '../widgets/budget_summary_card.dart';
 import '../widgets/section_header.dart';
 import '../widgets/wedding_edit_dialog.dart';
+import '../services/notification_service.dart';
+import '../services/backup_service.dart';
+import '../services/pdf_service.dart';
+import 'onboarding_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int) onNavigateToTab;
@@ -40,7 +44,7 @@ class DashboardScreen extends StatelessWidget {
                 const Icon(Icons.favorite, color: AppTheme.primaryRose, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'TemanNikah',
+                  'Teman Nikah',
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -397,17 +401,30 @@ class DashboardScreen extends StatelessWidget {
   void _showSettingsBottomSheet(BuildContext context, WeddingProvider provider) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Text(
                   'Pengaturan Aplikasi',
                   style: GoogleFonts.playfairDisplay(
@@ -415,22 +432,27 @@ class DashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
+
+                // ── BAGIAN: Data Pernikahan ──────────────────────
+                _sectionLabel('Data Pernikahan'),
                 ListTile(
-                  leading: const Icon(Icons.edit, color: AppTheme.primaryRose),
-                  title: const Text('Ubah Data Mempelai & Anggaran'),
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.app_registration_rounded, color: AppTheme.primaryRose),
+                  title: const Text('Form Data Master Pernikahan'),
+                  subtitle: const Text('Ubah nama, tanggal, lokasi & tema'),
                   onTap: () {
                     Navigator.pop(ctx);
-                    showDialog(
-                      context: context,
-                      builder: (dCtx) => WeddingEditDialog(
-                        initialInfo: provider.weddingInfo,
-                        onSave: (updated) => provider.updateWeddingInfo(updated),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OnboardingScreen(isEditingFromSettings: true),
                       ),
                     );
                   },
                 ),
                 ListTile(
+                  contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.palette_outlined, color: AppTheme.infoBlue),
                   title: const Text('Tema Warna Pernikahan'),
                   subtitle: Text(provider.currentTheme.name),
@@ -439,8 +461,204 @@ class DashboardScreen extends StatelessWidget {
                     _showThemePickerDialog(context, provider);
                   },
                 ),
+
+                const Divider(),
+
+                // ── BAGIAN: Ekspor PDF ───────────────────────────
+                _sectionLabel('Ekspor ke PDF'),
                 ListTile(
-                  leading: const Icon(Icons.refresh, color: AppTheme.warningOrange),
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.people_alt_outlined, color: AppTheme.infoBlue),
+                  title: const Text('Ekspor Daftar Tamu (PDF)'),
+                  subtitle: Text('${provider.guests.length} tamu • ${provider.totalGuests} pax'),
+                  trailing: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    if (provider.guests.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Belum ada data tamu yang bisa diekspor.')),
+                      );
+                      return;
+                    }
+                    try {
+                      await PdfService().exportGuestListPdf(
+                        context: context,
+                        info: provider.weddingInfo,
+                        guests: provider.guests,
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Gagal ekspor PDF: $e')),
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.schedule, color: AppTheme.accentGold),
+                  title: const Text('Ekspor Rundown Acara (PDF)'),
+                  subtitle: Text('${provider.rundowns.length} agenda acara'),
+                  trailing: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    if (provider.rundowns.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Belum ada rundown yang bisa diekspor.')),
+                      );
+                      return;
+                    }
+                    try {
+                      await PdfService().exportRundownPdf(
+                        context: context,
+                        info: provider.weddingInfo,
+                        rundowns: provider.rundowns,
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Gagal ekspor PDF: $e')),
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.savings_outlined, color: AppTheme.successGreen),
+                  title: const Text('Ekspor Ringkasan Anggaran (PDF)'),
+                  subtitle: Text('${provider.expenses.length} item pengeluaran'),
+                  trailing: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    try {
+                      await PdfService().exportBudgetPdf(
+                        context: context,
+                        info: provider.weddingInfo,
+                        expenses: provider.expenses,
+                        totalBudget: provider.totalBudget,
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Gagal ekspor PDF: $e')),
+                      );
+                    }
+                  },
+                ),
+
+                const Divider(),
+
+                // ── BAGIAN: Notifikasi ───────────────────────────
+                _sectionLabel('Notifikasi'),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.notifications_active_outlined, color: AppTheme.warningOrange),
+                  title: const Text('Aktifkan Pengingat Hari-H'),
+                  subtitle: const Text('Notifikasi otomatis H-30, H-14, H-7, H-3, H-1, Hari-H'),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final service = NotificationService();
+                    final granted = await service.requestPermission();
+                    if (!granted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Izin notifikasi ditolak. Aktifkan di Pengaturan HP.'),
+                          backgroundColor: AppTheme.errorRed,
+                        ),
+                      );
+                      return;
+                    }
+                    await service.scheduleWeddingReminders(provider.weddingInfo.weddingDate);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✅ Notifikasi pengingat hari-H berhasil diaktifkan!'),
+                        backgroundColor: AppTheme.successGreen,
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.notifications_off_outlined, color: AppTheme.textMuted),
+                  title: const Text('Matikan Semua Notifikasi'),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await NotificationService().cancelAllReminders();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Semua notifikasi pengingat dimatikan.')),
+                    );
+                  },
+                ),
+
+                const Divider(),
+
+                // ── BAGIAN: Backup & Restore ─────────────────────
+                _sectionLabel('Backup & Restore'),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.backup_outlined, color: AppTheme.infoBlue),
+                  title: const Text('Ekspor Backup Data'),
+                  subtitle: const Text('Simpan semua data ke file JSON'),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final success = await BackupService().exportBackup(context);
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Backup data berhasil diekspor!'),
+                          backgroundColor: AppTheme.successGreen,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.restore_outlined, color: AppTheme.warningOrange),
+                  title: const Text('Pulihkan dari Backup'),
+                  subtitle: const Text('Tempel isi file JSON backup untuk memulihkan'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showRestoreDialog(context, provider);
+                  },
+                ),
+
+                const Divider(),
+
+                // ── BAGIAN: Reset ────────────────────────────────
+                _sectionLabel('Reset'),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.restart_alt_rounded, color: AppTheme.warningOrange),
+                  title: const Text('Ulangi Setup Awal (Onboarding)'),
+                  subtitle: const Text('Kembali ke form pertama kali install'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    showDialog(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        title: const Text('Mulai Ulang Setup?'),
+                        content: const Text(
+                          'Aplikasi akan kembali menampilkan form master data seperti saat pertama kali diinstal.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c),
+                            child: const Text('Batal'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.warningOrange),
+                            onPressed: () {
+                              Navigator.pop(c);
+                              provider.resetToOnboarding();
+                            },
+                            child: const Text('Ya, Buka Form Awal'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.refresh, color: AppTheme.errorRed),
                   title: const Text('Reset ke Data Awal (Template)'),
                   subtitle: const Text('Mengembalikan data contoh default'),
                   onTap: () {
@@ -470,11 +688,81 @@ class DashboardScreen extends StatelessWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _sectionLabel(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4, left: 2),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textMuted,
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+
+  void _showRestoreDialog(BuildContext context, WeddingProvider provider) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Pulihkan dari Backup'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Tempel isi file JSON backup di bawah ini.\nSemua data saat ini akan digantikan.',
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textMuted),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                hintText: 'Paste isi file .json di sini...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.warningOrange),
+            onPressed: () async {
+              final json = controller.text.trim();
+              if (json.isEmpty) return;
+              Navigator.pop(ctx);
+              final result = await BackupService().importBackup(json);
+              if (result.success) {
+                await provider.loadData();
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(result.message),
+                  backgroundColor: result.success ? AppTheme.successGreen : AppTheme.errorRed,
+                ),
+              );
+            },
+            child: const Text('Pulihkan Data'),
+          ),
+        ],
+      ),
     );
   }
 

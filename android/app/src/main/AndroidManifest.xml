@@ -1,6 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Izin Notifikasi (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Izin Alarm tepat waktu untuk notifikasi terjadwal -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Izin waktu tepat alternatif -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- Izin membaca/tulis file untuk backup (Android < 13) -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <application
-        android:label="projectapp"
+        android:label="Teman Nikah"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

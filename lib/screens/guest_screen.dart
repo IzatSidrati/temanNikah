@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../providers/wedding_provider.dart';
 import '../models/guest_item.dart';
 import '../theme/app_theme.dart';
+import '../services/pdf_service.dart';
 
 class GuestScreen extends StatefulWidget {
   const GuestScreen({super.key});
@@ -63,6 +64,31 @@ class _GuestScreenState extends State<GuestScreen> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Daftar Tamu & RSVP'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.errorRed),
+                tooltip: 'Ekspor PDF',
+                onPressed: () async {
+                  if (provider.guests.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Belum ada tamu untuk diekspor.')),
+                    );
+                    return;
+                  }
+                  try {
+                    await PdfService().exportGuestListPdf(
+                      context: context,
+                      info: provider.weddingInfo,
+                      guests: provider.guests,
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Gagal ekspor PDF: $e')),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
           body: Column(
             children: [

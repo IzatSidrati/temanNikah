@@ -19,6 +19,7 @@ class WeddingProvider with ChangeNotifier {
   List<RundownItem> _rundowns = [];
   WeddingThemePalette _currentTheme = WeddingThemePalette.roseGold;
   bool _isLoading = true;
+  bool _isOnboarded = true;
 
   WeddingProvider() {
     _weddingInfo = DefaultData.weddingInfo;
@@ -39,6 +40,7 @@ class WeddingProvider with ChangeNotifier {
   List<RundownItem> get rundowns => _rundowns;
   WeddingThemePalette get currentTheme => _currentTheme;
   bool get isLoading => _isLoading;
+  bool get isOnboarded => _isOnboarded;
 
   // Countdown calculations
   int get daysRemaining {
@@ -144,6 +146,10 @@ class WeddingProvider with ChangeNotifier {
       if (themeId != null) {
         _currentTheme = WeddingThemePalette.fromId(themeId);
       }
+
+      final bool? onboarded = prefs.getBool('nikah_is_onboarded');
+      // Bila belum pernah disimpan, cek apakah sudah ada nikah_wedding_info
+      _isOnboarded = onboarded ?? (weddingInfoString != null);
     } catch (e) {
       debugPrint('Error loading data from SharedPreferences: $e');
     } finally {
@@ -331,5 +337,51 @@ class WeddingProvider with ChangeNotifier {
         prefs.setString('nikah_theme_id', WeddingThemePalette.roseGold.id);
       });
     } catch (_) {}
+  }
+
+  // Onboarding Setup: Simpan Data Master pertama kali
+  Future<void> completeOnboarding({
+    required WeddingInfo info,
+    required bool useDefaultChecklist,
+    WeddingThemePalette? theme,
+  }) async {
+    _weddingInfo = info;
+    if (theme != null) {
+      _currentTheme = theme;
+    }
+    if (useDefaultChecklist) {
+      _checklist = DefaultData.checklistItems;
+    } else {
+      _checklist = [];
+    }
+    _expenses = [];
+    _guests = [];
+    _vendors = [];
+    _rundowns = [];
+    _isOnboarded = true;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('nikah_is_onboarded', true);
+      if (theme != null) {
+        await prefs.setString('nikah_theme_id', theme.id);
+      }
+      await _saveAll();
+    } catch (e) {
+      debugPrint('Error saving onboarding data: $e');
+    }
+  }
+
+  // Buka kembali form master data jika diperlukan
+  Future<void> resetToOnboarding() async {
+    _isOnboarded = false;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('nikah_is_onboarded', false);
+    } catch (e) {
+      debugPrint('Error resetting onboarding state: $e');
+    }
   }
 }
